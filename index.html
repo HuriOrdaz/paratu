@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>para tú</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,300;1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f2ebe2;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      cursor: none;
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    /* Cursor personalizado */
+    #cursor {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: #e8737a;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      transition: transform 0.1s ease;
+      mix-blend-mode: multiply;
+    }
+
+    /* Canvas partículas */
+    #particles {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Jardín */
+    #garden {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Texto central */
+    .title {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(4rem, 10vw, 9rem);
+      font-style: italic;
+      font-weight: 300;
+      color: #2c2416;
+      letter-spacing: 0.05em;
+      z-index: 10;
+      user-select: none;
+      text-align: center;
+      line-height: 1;
+      transition: letter-spacing 0.8s ease;
+    }
+    .title.glow {
+      letter-spacing: 0.12em;
+      text-shadow: 0 0 40px rgba(232, 115, 122, 0.3);
+    }
+
+    /* Contenedor de cada flor */
+    .flower-wrap {
+      position: absolute;
+      transform-origin: bottom center;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    /* SVG flor */
+    .flower-wrap svg {
+      display: block;
+      overflow: visible;
+    }
+
+    /* Pétalos: estado inicial colapsado */
+    .petals-group {
+      transform-origin: center;
+      transform: scale(0);
+      opacity: 0;
+      transition:
+        transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
+        opacity 0.5s ease;
+    }
+
+    .petal {
+      transform-origin: center bottom;
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Estado florecido */
+    .flower-wrap.bloomed .petals-group {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    /* Partícula pétalo flotante */
+    @keyframes floatPetal {
+      0%   { transform: translate(0,0) rotate(0deg) scale(1); opacity: 0.8; }
+      100% { transform: translate(var(--tx), var(--ty)) rotate(var(--tr)) scale(0); opacity: 0; }
+    }
+
+    .float-petal {
+      position: fixed;
+      width: 8px;
+      height: 10px;
+      border-radius: 50% 50% 50% 0;
+      pointer-events: none;
+      z-index: 20;
+      animation: floatPetal 1.8s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<canvas id="particles"></canvas>
+
+<div id="garden">
+
+  <!-- ROSA 1 — coral, izquierda alto -->
+  <div class="flower-wrap" style="left:8%; bottom:38%; width:110px;" data-bloom-r="130">
+    <svg viewBox="0 0 110 180" width="110" height="180">
+      <!-- Tallo -->
+      <path d="M55 180 C53 140 50 110 52 80" stroke="#2c2416" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- Hojas -->
+      <path d="M52 130 C35 118 28 105 38 98 C42 108 48 118 52 130Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <path d="M52 110 C68 98 76 85 66 78 C62 88 56 98 52 110Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <!-- Pétalos rosa (agrupados, se abren) -->
+      <g class="petals-group" transform="translate(53,68)">
+        <!-- pétalo 1 -->
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="#e8737a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(0deg)"/>
+        <!-- pétalo 2 -->
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="#e8737a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(60deg)"/>
+        <!-- pétalo 3 -->
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="#e8737a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(120deg)"/>
+        <!-- pétalo 4 -->
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="#e8737a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(180deg)"/>
+        <!-- pétalo 5 -->
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="#e8737a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(240deg)"/>
+        <!-- pétalo 6 -->
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="#e8737a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(300deg)"/>
+        <!-- capa interior más oscura -->
+        <ellipse cx="0" cy="-14" rx="7" ry="13" fill="#c95a62" opacity="0.7"
+          style="transform-origin:0px 0px; transform:rotate(30deg)"/>
+        <ellipse cx="0" cy="-14" rx="7" ry="13" fill="#c95a62" opacity="0.7"
+          style="transform-origin:0px 0px; transform:rotate(150deg)"/>
+        <ellipse cx="0" cy="-14" rx="7" ry="13" fill="#c95a62" opacity="0.7"
+          style="transform-origin:0px 0px; transform:rotate(270deg)"/>
+        <!-- centro -->
+        <circle cx="0" cy="0" r="7" fill="#f5c5a3"/>
+        <circle cx="0" cy="0" r="4" fill="#e8a080"/>
+        <!-- contorno pétalos -->
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(0deg)"/>
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(60deg)"/>
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(120deg)"/>
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(180deg)"/>
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(240deg)"/>
+        <ellipse cx="0" cy="-22" rx="11" ry="20" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(300deg)"/>
+      </g>
+      <!-- Botón cerrado (siempre visible) -->
+      <circle cx="53" cy="68" r="5" fill="none" stroke="#2c2416" stroke-width="1.2"/>
+    </svg>
+  </div>
+
+  <!-- TULIPÁN NARANJA — derecha, muy arriba -->
+  <div class="flower-wrap" style="right:12%; bottom:52%; width:90px;" data-bloom-r="130">
+    <svg viewBox="0 0 90 170" width="90" height="170">
+      <path d="M45 170 C44 135 43 105 45 75" stroke="#2c2416" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M45 130 C28 120 22 108 32 102 C36 112 41 121 45 130Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <g class="petals-group" transform="translate(45,62)">
+        <!-- tulipán: 3 pétalos exteriores + 3 interiores -->
+        <path d="M0,0 C-18,-15 -20,-45 0,-55 C20,-45 18,-15 0,0Z" fill="#f4a261"
+          style="transform-origin:0px 0px; transform:rotate(-40deg)"/>
+        <path d="M0,0 C-18,-15 -20,-45 0,-55 C20,-45 18,-15 0,0Z" fill="#f4a261"
+          style="transform-origin:0px 0px; transform:rotate(40deg)"/>
+        <path d="M0,0 C-18,-15 -20,-45 0,-55 C20,-45 18,-15 0,0Z" fill="#f4a261"
+          style="transform-origin:0px 0px; transform:rotate(0deg) scaleX(0.8)"/>
+        <!-- interiores -->
+        <path d="M0,0 C-12,-12 -13,-38 0,-46 C13,-38 12,-12 0,0Z" fill="#e8873a" opacity="0.85"
+          style="transform-origin:0px 0px; transform:rotate(-20deg)"/>
+        <path d="M0,0 C-12,-12 -13,-38 0,-46 C13,-38 12,-12 0,0Z" fill="#e8873a" opacity="0.85"
+          style="transform-origin:0px 0px; transform:rotate(20deg)"/>
+        <!-- contornos -->
+        <path d="M0,0 C-18,-15 -20,-45 0,-55 C20,-45 18,-15 0,0Z" fill="none" stroke="#2c2416" stroke-width="0.9" opacity="0.5"
+          style="transform-origin:0px 0px; transform:rotate(-40deg)"/>
+        <path d="M0,0 C-18,-15 -20,-45 0,-55 C20,-45 18,-15 0,0Z" fill="none" stroke="#2c2416" stroke-width="0.9" opacity="0.5"
+          style="transform-origin:0px 0px; transform:rotate(40deg)"/>
+        <path d="M0,0 C-18,-15 -20,-45 0,-55 C20,-45 18,-15 0,0Z" fill="none" stroke="#2c2416" stroke-width="0.9" opacity="0.5"
+          style="transform-origin:0px 0px; transform:rotate(0deg) scaleX(0.8)"/>
+        <circle cx="0" cy="-10" r="3" fill="#fff5e6" opacity="0.6"/>
+      </g>
+      <circle cx="45" cy="62" r="5" fill="none" stroke="#2c2416" stroke-width="1.2"/>
+    </svg>
+  </div>
+
+  <!-- AMAPOLA ROSA — izquierda, alto -->
+  <div class="flower-wrap" style="left:22%; bottom:55%; width:100px;" data-bloom-r="125">
+    <svg viewBox="0 0 100 190" width="100" height="190">
+      <path d="M50 190 C47 150 46 120 50 85" stroke="#2c2416" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M50 145 C32 133 25 118 36 110 C40 121 45 133 50 145Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <path d="M50 125 C67 113 74 98 63 90 C59 101 54 112 50 125Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <g class="petals-group" transform="translate(50,72)">
+        <ellipse cx="0" cy="-26" rx="14" ry="24" fill="#d4849a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(0deg)"/>
+        <ellipse cx="0" cy="-26" rx="14" ry="24" fill="#d4849a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(72deg)"/>
+        <ellipse cx="0" cy="-26" rx="14" ry="24" fill="#d4849a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(144deg)"/>
+        <ellipse cx="0" cy="-26" rx="14" ry="24" fill="#d4849a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(216deg)"/>
+        <ellipse cx="0" cy="-26" rx="14" ry="24" fill="#d4849a" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(288deg)"/>
+        <!-- contornos -->
+        <ellipse cx="0" cy="-26" rx="14" ry="24" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(0deg)"/>
+        <ellipse cx="0" cy="-26" rx="14" ry="24" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(72deg)"/>
+        <ellipse cx="0" cy="-26" rx="14" ry="24" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(144deg)"/>
+        <ellipse cx="0" cy="-26" rx="14" ry="24" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(216deg)"/>
+        <ellipse cx="0" cy="-26" rx="14" ry="24" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(288deg)"/>
+        <!-- centro negro amapola -->
+        <circle cx="0" cy="0" r="9" fill="#2c2416"/>
+        <circle cx="0" cy="0" r="5" fill="#3d3020"/>
+        <!-- estambres -->
+        <circle cx="0" cy="-7" r="1.5" fill="#f2ebe2"/>
+        <circle cx="6" cy="-4" r="1.5" fill="#f2ebe2"/>
+        <circle cx="6" cy="4" r="1.5" fill="#f2ebe2"/>
+        <circle cx="0" cy="7" r="1.5" fill="#f2ebe2"/>
+        <circle cx="-6" cy="4" r="1.5" fill="#f2ebe2"/>
+        <circle cx="-6" cy="-4" r="1.5" fill="#f2ebe2"/>
+      </g>
+      <circle cx="50" cy="72" r="5" fill="none" stroke="#2c2416" stroke-width="1.2"/>
+    </svg>
+  </div>
+
+  <!-- CAPULLO NARANJA — centro, bajo -->
+  <div class="flower-wrap" style="left:47%; bottom:20%; width:70px;" data-bloom-r="110">
+    <svg viewBox="0 0 70 150" width="70" height="150">
+      <path d="M35 150 C34 120 33 100 35 78" stroke="#2c2416" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M35 120 C20 110 15 100 24 95 C27 105 31 113 35 120Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <g class="petals-group" transform="translate(35,60)">
+        <!-- capullo cerrado que se abre -->
+        <path d="M0,0 C-12,-10 -14,-32 0,-40 C14,-32 12,-10 0,0Z" fill="#f4a261"
+          style="transform-origin:0px 0px; transform:rotate(-30deg)"/>
+        <path d="M0,0 C-12,-10 -14,-32 0,-40 C14,-32 12,-10 0,0Z" fill="#f4a261"
+          style="transform-origin:0px 0px; transform:rotate(30deg)"/>
+        <path d="M0,0 C-8,-8 -9,-28 0,-34 C9,-28 8,-8 0,0Z" fill="#e8873a"
+          style="transform-origin:0px 0px; transform:rotate(0deg)"/>
+        <path d="M0,0 C-12,-10 -14,-32 0,-40 C14,-32 12,-10 0,0Z" fill="none" stroke="#2c2416" stroke-width="0.9" opacity="0.5"
+          style="transform-origin:0px 0px; transform:rotate(-30deg)"/>
+        <path d="M0,0 C-12,-10 -14,-32 0,-40 C14,-32 12,-10 0,0Z" fill="none" stroke="#2c2416" stroke-width="0.9" opacity="0.5"
+          style="transform-origin:0px 0px; transform:rotate(30deg)"/>
+      </g>
+      <ellipse cx="35" cy="60" rx="5" ry="7" fill="none" stroke="#2c2416" stroke-width="1.2"/>
+    </svg>
+  </div>
+
+  <!-- FLOR CORAZÓN NAVY — derecha centro -->
+  <div class="flower-wrap" style="right:8%; bottom:35%; width:85px;" data-bloom-r="120">
+    <svg viewBox="0 0 85 160" width="85" height="160">
+      <path d="M42 160 C41 125 40 100 43 72" stroke="#2c2416" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M43 125 C27 115 21 104 31 98 C34 108 39 117 43 125Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <g class="petals-group" transform="translate(43,58)">
+        <!-- forma de corazón (como en la imagen) -->
+        <path d="M0,0 C-10,-8 -18,-20 -12,-30 C-6,-38 0,-32 0,-28 C0,-32 6,-38 12,-30 C18,-20 10,-8 0,0Z"
+          fill="#2c3e50" stroke="#2c2416" stroke-width="0.9"/>
+        <!-- pequeños estambres arriba -->
+        <line x1="-12" y1="-30" x2="-14" y2="-38" stroke="#2c2416" stroke-width="1" stroke-linecap="round"/>
+        <circle cx="-14" cy="-39" r="2" fill="#2c2416"/>
+        <line x1="0" y1="-28" x2="0" y2="-37" stroke="#2c2416" stroke-width="1" stroke-linecap="round"/>
+        <circle cx="0" cy="-38" r="2" fill="#2c2416"/>
+        <line x1="12" y1="-30" x2="14" y2="-38" stroke="#2c2416" stroke-width="1" stroke-linecap="round"/>
+        <circle cx="14" cy="-39" r="2" fill="#2c2416"/>
+      </g>
+      <circle cx="43" cy="58" r="5" fill="none" stroke="#2c2416" stroke-width="1.2"/>
+    </svg>
+  </div>
+
+  <!-- FLOR SILVESTRE ROSA — izquierda bajo -->
+  <div class="flower-wrap" style="left:5%; bottom:18%; width:80px;" data-bloom-r="115">
+    <svg viewBox="0 0 80 155" width="80" height="155">
+      <path d="M40 155 C39 120 38 95 40 68" stroke="#2c2416" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M40 120 C25 110 20 100 29 94 C32 103 36 112 40 120Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <path d="M40 105 C54 95 60 84 51 78 C48 88 43 97 40 105Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <g class="petals-group" transform="translate(40,56)">
+        <ellipse cx="0" cy="-20" rx="9" ry="18" fill="#e8a4b0" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(0deg)"/>
+        <ellipse cx="0" cy="-20" rx="9" ry="18" fill="#e8a4b0" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(72deg)"/>
+        <ellipse cx="0" cy="-20" rx="9" ry="18" fill="#e8a4b0" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(144deg)"/>
+        <ellipse cx="0" cy="-20" rx="9" ry="18" fill="#e8a4b0" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(216deg)"/>
+        <ellipse cx="0" cy="-20" rx="9" ry="18" fill="#e8a4b0" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(288deg)"/>
+        <ellipse cx="0" cy="-20" rx="9" ry="18" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(0deg)"/>
+        <ellipse cx="0" cy="-20" rx="9" ry="18" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(72deg)"/>
+        <ellipse cx="0" cy="-20" rx="9" ry="18" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(144deg)"/>
+        <ellipse cx="0" cy="-20" rx="9" ry="18" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(216deg)"/>
+        <ellipse cx="0" cy="-20" rx="9" ry="18" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(288deg)"/>
+        <circle cx="0" cy="0" r="7" fill="#f5c5a3"/>
+        <circle cx="0" cy="0" r="4" fill="#f0aa80"/>
+        <!-- estambres pequeños -->
+        <circle cx="0" cy="-5" r="1" fill="#2c2416"/>
+        <circle cx="4" cy="-3" r="1" fill="#2c2416"/>
+        <circle cx="-4" cy="-3" r="1" fill="#2c2416"/>
+      </g>
+      <circle cx="40" cy="56" r="5" fill="none" stroke="#2c2416" stroke-width="1.2"/>
+    </svg>
+  </div>
+
+  <!-- TULIPÁN ROJO — derecha bajo -->
+  <div class="flower-wrap" style="right:20%; bottom:15%; width:85px;" data-bloom-r="120">
+    <svg viewBox="0 0 85 165" width="85" height="165">
+      <path d="M42 165 C41 130 40 105 43 78" stroke="#2c2416" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M43 130 C27 118 22 106 32 100 C35 110 40 120 43 130Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <path d="M43 110 C58 98 64 85 54 78 C50 89 46 99 43 110Z" stroke="#2c2416" stroke-width="1.2" fill="none"/>
+      <g class="petals-group" transform="translate(43,64)">
+        <path d="M0,0 C-16,-12 -18,-40 0,-50 C18,-40 16,-12 0,0Z" fill="#e07070"
+          style="transform-origin:0px 0px; transform:rotate(-35deg)"/>
+        <path d="M0,0 C-16,-12 -18,-40 0,-50 C18,-40 16,-12 0,0Z" fill="#e07070"
+          style="transform-origin:0px 0px; transform:rotate(35deg)"/>
+        <path d="M0,0 C-16,-12 -18,-40 0,-50 C18,-40 16,-12 0,0Z" fill="#e07070"
+          style="transform-origin:0px 0px; transform:rotate(0deg) scaleX(0.75)"/>
+        <path d="M0,0 C-10,-10 -12,-34 0,-42 C12,-34 10,-10 0,0Z" fill="#c04040" opacity="0.8"
+          style="transform-origin:0px 0px; transform:rotate(-18deg)"/>
+        <path d="M0,0 C-10,-10 -12,-34 0,-42 C12,-34 10,-10 0,0Z" fill="#c04040" opacity="0.8"
+          style="transform-origin:0px 0px; transform:rotate(18deg)"/>
+        <!-- contornos -->
+        <path d="M0,0 C-16,-12 -18,-40 0,-50 C18,-40 16,-12 0,0Z" fill="none" stroke="#2c2416" stroke-width="0.9" opacity="0.5"
+          style="transform-origin:0px 0px; transform:rotate(-35deg)"/>
+        <path d="M0,0 C-16,-12 -18,-40 0,-50 C18,-40 16,-12 0,0Z" fill="none" stroke="#2c2416" stroke-width="0.9" opacity="0.5"
+          style="transform-origin:0px 0px; transform:rotate(35deg)"/>
+        <path d="M0,0 C-16,-12 -18,-40 0,-50 C18,-40 16,-12 0,0Z" fill="none" stroke="#2c2416" stroke-width="0.9" opacity="0.5"
+          style="transform-origin:0px 0px; transform:rotate(0deg) scaleX(0.75)"/>
+      </g>
+      <circle cx="43" cy="64" r="5" fill="none" stroke="#2c2416" stroke-width="1.2"/>
+    </svg>
+  </div>
+
+  <!-- FLOR PEQUEÑA EXTRA — derecha, muy arriba -->
+  <div class="flower-wrap" style="right:30%; bottom:65%; width:65px;" data-bloom-r="100">
+    <svg viewBox="0 0 65 130" width="65" height="130">
+      <path d="M32 130 C31 105 30 88 32 65" stroke="#2c2416" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+      <path d="M32 105 C20 97 16 89 24 84 C26 92 29 99 32 105Z" stroke="#2c2416" stroke-width="1.1" fill="none"/>
+      <g class="petals-group" transform="translate(32,53)">
+        <ellipse cx="0" cy="-16" rx="8" ry="14" fill="#f4b8c8" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(0deg)"/>
+        <ellipse cx="0" cy="-16" rx="8" ry="14" fill="#f4b8c8" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(90deg)"/>
+        <ellipse cx="0" cy="-16" rx="8" ry="14" fill="#f4b8c8" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(180deg)"/>
+        <ellipse cx="0" cy="-16" rx="8" ry="14" fill="#f4b8c8" opacity="0.9"
+          style="transform-origin:0px 0px; transform:rotate(270deg)"/>
+        <ellipse cx="0" cy="-16" rx="8" ry="14" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(0deg)"/>
+        <ellipse cx="0" cy="-16" rx="8" ry="14" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(90deg)"/>
+        <ellipse cx="0" cy="-16" rx="8" ry="14" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(180deg)"/>
+        <ellipse cx="0" cy="-16" rx="8" ry="14" fill="none" stroke="#2c2416" stroke-width="0.8" opacity="0.4"
+          style="transform-origin:0px 0px; transform:rotate(270deg)"/>
+        <circle cx="0" cy="0" r="5" fill="#f4a261"/>
+        <circle cx="0" cy="0" r="3" fill="#e8873a"/>
+      </g>
+      <circle cx="32" cy="53" r="4" fill="none" stroke="#2c2416" stroke-width="1.1"/>
+    </svg>
+  </div>
+
+  <!-- BOTONES PEQUEÑOS decorativos (siempre visibles) -->
+  <!-- Conjunto izq-centro -->
+  <div style="position:absolute; left:15%; bottom:32%; pointer-events:none; z-index:3;">
+    <svg viewBox="0 0 60 90" width="60" height="90">
+      <path d="M10 90 C10 75 11 60 12 45" stroke="#2c2416" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <circle cx="12" cy="42" r="4" fill="none" stroke="#2c2416" stroke-width="1.2"/>
+      <path d="M25 90 C25 70 26 55 27 38" stroke="#2c2416" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <circle cx="27" cy="35" r="4" fill="none" stroke="#2c2416" stroke-width="1.2"/>
+      <path d="M40 90 C40 78 41 65 42 52" stroke="#2c2416" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <circle cx="42" cy="49" r="4" fill="none" stroke="#2c2416" stroke-width="1.2"/>
+      <!-- hoja decorativa -->
+      <path d="M12 70 C2 62 0 52 8 48 C10 58 11 64 12 70Z" stroke="#2c2416" stroke-width="1.1" fill="none"/>
+    </svg>
+  </div>
+
+  <!-- Texto "para tú" -->
+  <h1 class="title" id="title">para tú</h1>
+
+</div><!-- fin garden -->
+
+<script>
+  // ── Cursor personalizado ──────────────────────────────────────────
+  const cursor = document.getElementById('cursor');
+  let mx = -200, my = -200;
+
+  document.addEventListener('mousemove', (e) => {
+    mx = e.clientX;
+    my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top  = my + 'px';
+    checkBlooms();
+    checkTitle();
+  });
+
+  // ── Flores: bloom por proximidad ──────────────────────────────────
+  const flowers = document.querySelectorAll('.flower-wrap[data-bloom-r]');
+
+  function getFlowerCenter(el) {
+    const rect = el.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top  + rect.height * 0.45   // aprox centro del capullo
+    };
+  }
+
+  function checkBlooms() {
+    flowers.forEach(fl => {
+      const r   = parseFloat(fl.dataset.bloomR);
+      const c   = getFlowerCenter(fl);
+      const dx  = mx - c.x;
+      const dy  = my - c.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if (dist < r) {
+        if (!fl.classList.contains('bloomed')) {
+          fl.classList.add('bloomed');
+          spawnPetals(c.x, c.y, fl);
+        }
+      } else {
+        fl.classList.remove('bloomed');
+      }
+    });
+  }
+
+  // ── Título: glow al acercarse ─────────────────────────────────────
+  const title = document.getElementById('title');
+
+  function checkTitle() {
+    const rect = title.getBoundingClientRect();
+    const cx = rect.left + rect.width  / 2;
+    const cy = rect.top  + rect.height / 2;
+    const dist = Math.sqrt((mx-cx)**2 + (my-cy)**2);
+    if (dist < 160) {
+      title.classList.add('glow');
+    } else {
+      title.classList.remove('glow');
+    }
+  }
+
+  // ── Pétalos flotantes al florecer ─────────────────────────────────
+  const petalColors = ['#e8737a','#f4a261','#d4849a','#e8a4b0','#f4b8c8','#e07070','#2c3e50','#c95a62'];
+
+  function spawnPetals(x, y, flowerEl) {
+    const count = 5 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const p = document.createElement('div');
+        p.className = 'float-petal';
+        const angle = (Math.random() * 360) * Math.PI / 180;
+        const dist  = 40 + Math.random() * 70;
+        const tx = Math.cos(angle) * dist;
+        const ty = -(50 + Math.random() * 80);
+        const tr = (Math.random() - 0.5) * 360;
+        p.style.setProperty('--tx', tx + 'px');
+        p.style.setProperty('--ty', ty + 'px');
+        p.style.setProperty('--tr', tr + 'deg');
+        p.style.left = (x + (Math.random()-0.5)*20) + 'px';
+        p.style.top  = (y + (Math.random()-0.5)*20) + 'px';
+        p.style.background = petalColors[Math.floor(Math.random()*petalColors.length)];
+        p.style.transform = 'translate(-50%,-50%)';
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 1900);
+      }, i * 80);
+    }
+  }
+
+  // ── Partículas de fondo (canvas) ──────────────────────────────────
+  const canvas = document.getElementById('particles');
+  const ctx    = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const particles = [];
+  const PARTICLE_COUNT = 38;
+
+  const pColors = ['#e8737a', '#f4a261', '#d4849a', '#e8a4b0', '#c9a090'];
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    particles.push({
+      x:     Math.random() * window.innerWidth,
+      y:     Math.random() * window.innerHeight,
+      r:     1 + Math.random() * 2.5,
+      vx:    (Math.random() - 0.5) * 0.3,
+      vy:    -0.1 - Math.random() * 0.25,
+      alpha: 0.15 + Math.random() * 0.35,
+      color: pColors[Math.floor(Math.random() * pColors.length)],
+      life:  Math.random() * Math.PI * 2   // fase inicial aleatoria
+    });
+  }
+
+  function animParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.life += 0.012;
+      p.x += p.vx + Math.sin(p.life) * 0.15;
+      p.y += p.vy;
+      if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.alpha * (0.6 + 0.4 * Math.sin(p.life));
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animParticles);
+  }
+  animParticles();
+</script>
+</body>
+</html>
